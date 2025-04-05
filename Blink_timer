@@ -1,0 +1,61 @@
+/*
+ * File     : blink.c
+ * Project  : LangC_MCU/16_timers_CTC/blink
+ * MCU      : attiny85/attiny25
+ *
+ */
+
+// #define F_CPU 1000000UL
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/interrupt.h>
+
+#define LED1_PIN PB0 //  PB0(OCR0A)
+#define POT PB2      //  PB2, INT0
+#define BUTTON PB4   //  PB4, PCINT4
+volatile int a = 0;
+int main(void) {
+  // set led pins as output
+  DDRB |= (1 << LED1_PIN); // set pins as output
+
+  // setup Timer0/Counter0 to CTC mode
+
+  // 1. Select mode - CTC
+  //    WGM02 WGM01 WGM00
+  //      0     1    0
+  TCCR0A &= ~(1 << WGM02);
+  TCCR0A |= 1 << WGM01;
+  TCCR0B |= ~(1 << WGM00); //!!!
+
+  // 2. Select prescaler
+  //   CS02 CS01 C00
+  //    1    0    0   - 1024
+  TCCR0B |= (1 << CS00);
+  TCCR0B &= ~(1 << CS01);
+  TCCR0B |= 1 << CS02;
+
+  // OCR = (F_CPU / f )/ 2 / N - 1
+  // OCR = (1000000 / 2) / 2 / 1024 -1 
+  OCR0A =  1000000 / 2 / 2 / 1024 - 1 ; // 243;
+
+  // Select mode COM//
+  // COM0A0   COM0A1 
+  //   0        0
+
+  TCCR0A &= ~(1 << COM0A1);
+  TCCR0A &= ~(1 << COM0A1);
+
+  sei();
+  while (1) {
+  }
+
+}
+ISR(TIMER0_COMPA_vect){
+   if(a == 1){
+      a = 0;
+   }
+   else{
+      PORTB ^= (1 << LED1_PIN);
+      a = 1;
+   }
+  }
